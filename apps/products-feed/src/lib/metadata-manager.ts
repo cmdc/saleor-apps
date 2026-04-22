@@ -1,7 +1,13 @@
 import { EncryptedMetadataManager, type MetadataEntry } from "@saleor/app-sdk/settings-manager";
+import { createRotatingDecryptCallback } from "@saleor/apps-shared/key-rotation/rotating-decrypt-callback";
+import {
+  resolveDecryptFallbacks,
+  resolveEncryptKey,
+} from "@saleor/apps-shared/secret-key-resolution";
 import { type Client } from "urql";
 
 import { env } from "@/env";
+import { createLogger } from "@/logger";
 
 import {
   DeleteAppMetadataDocument,
@@ -10,12 +16,26 @@ import {
   UpdateAppMetadataDocument,
 } from "../../generated/graphql";
 
+const logger = createLogger("MetadataManager");
+
 export async function fetchAllMetadata(client: Client): Promise<MetadataEntry[]> {
   const { error, data } = await client
     .query<FetchAppDetailsQuery>(FetchAppDetailsDocument, {})
     .toPromise();
 
   if (error) {
+    const cause =
+      error.networkError?.cause instanceof Error
+        ? (error.networkError.cause as NodeJS.ErrnoException)
+        : undefined;
+
+    logger.error("[metadata-manager] Failed to fetch app metadata", {
+      errorMessage: error.message,
+      networkErrorMessage: error.networkError?.message,
+      causeCode: cause?.code,
+      causeMessage: cause?.message,
+    });
+
     return [];
   }
 
@@ -95,6 +115,9 @@ async function deleteMetadata(
 }
 
 export const createSettingsManager = (client: Client) => {
+  const encryptKey = resolveEncryptKey(env);
+  const fallbackKeys = resolveDecryptFallbacks(env);
+
   /*
    * EncryptedMetadataManager gives you interface to manipulate metadata and cache values in memory.
    * We recommend it for production, because all values are encrypted.
@@ -102,7 +125,10 @@ export const createSettingsManager = (client: Client) => {
    */
   return new EncryptedMetadataManager({
     // Secret key should be randomly created for production and set as environment variable
-    encryptionKey: env.SECRET_KEY,
+    encryptionKey: encryptKey,
+    ...(fallbackKeys.length > 0 && {
+      decryptionMethod: createRotatingDecryptCallback(encryptKey, fallbackKeys, logger),
+    }),
     fetchMetadata: () => fetchAllMetadata(client),
     mutateMetadata: (metadata) => mutateMetadata(client, metadata),
     deleteMetadata: (keys) => deleteMetadata(client, keys),

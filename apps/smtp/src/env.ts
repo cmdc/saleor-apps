@@ -1,22 +1,10 @@
 import { booleanEnv } from "@saleor/apps-shared/boolean-env";
+import {
+  newSecretKeyRuntimeEnv,
+  newSecretKeyServerSchema,
+} from "@saleor/apps-shared/secret-key-resolution";
 import { createEnv } from "@t3-oss/env-nextjs";
-import { z, type ZodTypeAny } from "zod";
-
-import { defaultBlockedFallbackEmailDomains } from "./const";
-
-function arrayFromString<T extends ZodTypeAny>(schema: T) {
-  return z.preprocess((obj) => {
-    if (Array.isArray(obj)) {
-      return obj;
-    }
-
-    if (typeof obj === "string") {
-      return obj.split(",");
-    }
-
-    throw new Error(`Unexpected type: ${typeof obj}`);
-  }, z.array(schema));
-}
+import { z } from "zod";
 
 export const env = createEnv({
   client: {
@@ -37,12 +25,6 @@ export const env = createEnv({
     PORT: z.coerce.number().default(3000),
     SECRET_KEY: z.string(),
     VERCEL_URL: z.string().optional(),
-    DYNAMODB_MAIN_TABLE_NAME: z.string(),
-    DYNAMODB_REQUEST_TIMEOUT_MS: z.coerce.number().default(5_000),
-    DYNAMODB_CONNECTION_TIMEOUT_MS: z.coerce.number().default(2_000),
-    AWS_REGION: z.string(),
-    AWS_ACCESS_KEY_ID: z.string(),
-    AWS_SECRET_ACCESS_KEY: z.string(),
     VERCEL_GIT_COMMIT_SHA: z.string().optional(),
     OTEL_ACCESS_TOKEN: z.string().optional(),
     VERCEL_ENV: z.string().optional(),
@@ -59,11 +41,9 @@ export const env = createEnv({
     FALLBACK_SMTP_ENCRYPTION: z.enum(["NONE", "TLS", "SSL"]).default("NONE"),
     FALLBACK_SMTP_SENDER_NAME: z.string().min(1).optional(),
     FALLBACK_SMTP_SENDER_DOMAIN: z.string().min(1).optional(),
-    FALLBACK_BLOCKED_EMAIL_DOMAINS: arrayFromString(z.string().min(1))
-      .optional()
-      .transform((blockedDomains: string[] | undefined): string[] => {
-        return [...(blockedDomains || []), ...defaultBlockedFallbackEmailDomains];
-      }),
+    FALLBACK_SMTP_EMAIL_REDIRECT_ENDPOINT: z.string().url().optional(),
+    FALLBACK_SMTP_EMAIL_REDIRECT_TOKEN: z.string().min(1).optional(),
+    ...newSecretKeyServerSchema,
   },
   shared: {
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -87,12 +67,6 @@ export const env = createEnv({
     REST_APL_TOKEN: process.env.REST_APL_TOKEN,
     SECRET_KEY: process.env.SECRET_KEY,
     VERCEL_URL: process.env.VERCEL_URL,
-    DYNAMODB_MAIN_TABLE_NAME: process.env.DYNAMODB_MAIN_TABLE_NAME,
-    DYNAMODB_REQUEST_TIMEOUT_MS: process.env.DYNAMODB_REQUEST_TIMEOUT_MS,
-    DYNAMODB_CONNECTION_TIMEOUT_MS: process.env.DYNAMODB_CONNECTION_TIMEOUT_MS,
-    AWS_REGION: process.env.AWS_REGION,
-    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     VERCEL_GIT_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA,
     OTEL_ACCESS_TOKEN: process.env.OTEL_ACCESS_TOKEN,
     VERCEL_ENV: process.env.VERCEL_ENV,
@@ -105,7 +79,9 @@ export const env = createEnv({
     FALLBACK_SMTP_ENCRYPTION: process.env.FALLBACK_SMTP_ENCRYPTION,
     FALLBACK_SMTP_SENDER_NAME: process.env.FALLBACK_SMTP_SENDER_NAME,
     FALLBACK_SMTP_SENDER_DOMAIN: process.env.FALLBACK_SMTP_SENDER_DOMAIN,
-    FALLBACK_BLOCKED_EMAIL_DOMAINS: process.env.FALLBACK_BLOCKED_EMAIL_DOMAINS,
+    FALLBACK_SMTP_EMAIL_REDIRECT_ENDPOINT: process.env.FALLBACK_SMTP_EMAIL_REDIRECT_ENDPOINT,
+    FALLBACK_SMTP_EMAIL_REDIRECT_TOKEN: process.env.FALLBACK_SMTP_EMAIL_REDIRECT_TOKEN,
+    ...newSecretKeyRuntimeEnv,
   },
   isServer: typeof window === "undefined" || process.env.NODE_ENV === "test",
 });

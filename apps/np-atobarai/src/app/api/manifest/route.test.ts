@@ -1,3 +1,7 @@
+/*
+ * @vitest-environment node
+ * Enforce NOT using jsdom, because it stub native Node's Request, which breaks Node24 - it requires exact instances of AbortSignals
+ */
 import { testApiHandler } from "next-test-api-route-handler";
 import { describe, expect, it, vi } from "vitest";
 
@@ -98,7 +102,7 @@ describe("Manifest handler", async () => {
                 ],
                 "isActive": true,
                 "name": "NP Atobarai Fulfillment Tracking Number Updated",
-                "query": "subscription FulfillmentTrackingNumberUpdated { event { ...FulfillmentTrackingNumberUpdatedEvent }}fragment EventMetadata on Event { version issuedAt recipient { id }}fragment Channel on Channel { id slug currencyCode}fragment FulfillmentTrackingNumberUpdatedEvent on FulfillmentTrackingNumberUpdated { ...EventMetadata fulfillment { trackingNumber atobaraiPDCompanyCode: privateMetafield(key: "np-atobarai.pd-company-code") } order { id channel { ...Channel } transactions { pspReference createdBy { ... on App { __typename id } ... on User { __typename } } } }}",
+                "query": "subscription FulfillmentTrackingNumberUpdated { event { ...FulfillmentTrackingNumberUpdatedEvent }}fragment EventMetadata on Event { version issuedAt recipient { id }}fragment Channel on Channel { id slug currencyCode}fragment FulfillmentTrackingNumberUpdatedEvent on FulfillmentTrackingNumberUpdated { ...EventMetadata fulfillment { trackingNumber atobaraiPDCompanyCode: privateMetafield(key: "np-atobarai.pd-company-code") } order { id channel { ...Channel } transactions { pspReference events { type } createdBy { ... on App { __typename id } ... on User { __typename } } } }}",
                 "targetUrl": "https://localhost:3000/api/webhooks/saleor/fulfillment-tracking-number-updated",
               },
             ],

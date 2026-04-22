@@ -1,7 +1,12 @@
-import { Encryptor } from "@saleor/apps-shared/encryptor";
+import { RotatingEncryptor } from "@saleor/apps-shared/key-rotation/rotating-encryptor";
+import {
+  resolveDecryptFallbacks,
+  resolveEncryptKey,
+} from "@saleor/apps-shared/secret-key-resolution";
 import { createDynamoConfigRepository } from "@saleor/dynamo-config-repository";
 
 import { env } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
 import { AppChannelConfig } from "@/modules/app-config/app-config";
 import { appConfigEntity, appConfigSchema } from "@/modules/app-config/repo/dynamodb/entity";
 import { createAtobaraiMerchantCode } from "@/modules/atobarai/atobarai-merchant-code";
@@ -10,7 +15,11 @@ import { createAtobaraiShippingCompanyCode } from "@/modules/atobarai/atobarai-s
 import { createAtobaraiTerminalId } from "@/modules/atobarai/atobarai-terminal-id";
 import { dynamoMainTable } from "@/modules/dynamodb/dynamodb-main-table";
 
-const encryptor = new Encryptor(env.SECRET_KEY);
+const encryptor = new RotatingEncryptor({
+  primarySecret: resolveEncryptKey(env),
+  fallbackSecrets: resolveDecryptFallbacks(env),
+  logger: createLogger("RotatingEncryptor"),
+});
 
 export const appConfigRepo = createDynamoConfigRepository<
   AppChannelConfig,

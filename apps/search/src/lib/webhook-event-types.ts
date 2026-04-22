@@ -1,4 +1,10 @@
 import type {
+  CategoryCreatedSubscription,
+  CategoryDeletedSubscription,
+  CategoryUpdatedSubscription,
+  PageCreatedSubscription,
+  PageDeletedSubscription,
+  PageUpdatedSubscription,
   ProductCreatedSubscription,
   ProductDeletedSubscription,
   ProductUpdatedSubscription,
@@ -9,6 +15,18 @@ import type {
   ProductVariantUpdatedSubscription,
 } from "../../generated/graphql";
 
+export type CategoryCreated = Extract<
+  NonNullable<CategoryCreatedSubscription["event"]>,
+  { __typename: "CategoryCreated" }
+>;
+export type CategoryDeleted = Extract<
+  NonNullable<CategoryDeletedSubscription["event"]>,
+  { __typename: "CategoryDeleted" }
+>;
+export type CategoryUpdated = Extract<
+  NonNullable<CategoryUpdatedSubscription["event"]>,
+  { __typename: "CategoryUpdated" }
+>;
 export type ProductCreated = Extract<
   NonNullable<ProductCreatedSubscription["event"]>,
   { __typename: "ProductCreated" }
@@ -40,6 +58,19 @@ export type ProductVariantOutOfStock = Extract<
 export type ProductVariantUpdated = Extract<
   NonNullable<ProductVariantUpdatedSubscription["event"]>,
   { __typename: "ProductVariantUpdated" }
+>;
+
+export type PageCreated = Extract<
+  NonNullable<PageCreatedSubscription["event"]>,
+  { __typename: "PageCreated" }
+>;
+export type PageDeleted = Extract<
+  NonNullable<PageDeletedSubscription["event"]>,
+  { __typename: "PageDeleted" }
+>;
+export type PageUpdated = Extract<
+  NonNullable<PageUpdatedSubscription["event"]>,
+  { __typename: "PageUpdated" }
 >;
 
 export type { MetadataItemFragment as MetadataItem } from "../../generated/graphql";

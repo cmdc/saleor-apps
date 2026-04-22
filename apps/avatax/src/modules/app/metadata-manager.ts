@@ -1,4 +1,9 @@
 import { EncryptedMetadataManager, type MetadataEntry } from "@saleor/app-sdk/settings-manager";
+import { createRotatingDecryptCallback } from "@saleor/apps-shared/key-rotation/rotating-decrypt-callback";
+import {
+  resolveDecryptFallbacks,
+  resolveEncryptKey,
+} from "@saleor/apps-shared/secret-key-resolution";
 import { type Client } from "urql";
 
 import { env } from "@/env";
@@ -24,6 +29,18 @@ export async function fetchAllMetadata(client: Pick<Client, "query">): Promise<M
     .toPromise();
 
   if (error) {
+    const cause =
+      error.networkError?.cause instanceof Error
+        ? (error.networkError.cause as NodeJS.ErrnoException)
+        : undefined;
+
+    logger.error("Failed to fetch app metadata", {
+      errorMessage: error.message,
+      networkErrorMessage: error.networkError?.message,
+      causeCode: cause?.code,
+      causeMessage: cause?.message,
+    });
+
     return [];
   }
 
@@ -88,9 +105,15 @@ export const createSettingsManager = (
    * We recommend it for production, because all values are encrypted.
    * If your use case require plain text values, you can use MetadataManager.
    */
+  const encryptKey = resolveEncryptKey(env);
+  const fallbackKeys = resolveDecryptFallbacks(env);
+
   return new EncryptedMetadataManager({
     // Secret key should be randomly created for production and set as environment variable
-    encryptionKey: env.SECRET_KEY,
+    encryptionKey: encryptKey,
+    ...(fallbackKeys.length > 0 && {
+      decryptionMethod: createRotatingDecryptCallback(encryptKey, fallbackKeys, logger),
+    }),
     fetchMetadata: async () => {
       const cachedMetadata = cache.getRawMetadata();
 

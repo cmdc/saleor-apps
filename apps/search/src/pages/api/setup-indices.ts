@@ -11,6 +11,7 @@ import { ChannelsDocument } from "../../../generated/graphql";
 import { saleorApp } from "../../../saleor-app";
 import { AlgoliaErrorParser } from "../../lib/algolia/algolia-error-parser";
 import { AlgoliaSearchProvider } from "../../lib/algolia/algoliaSearchProvider";
+import { AlgoliaPageFieldsKeys } from "../../lib/algolia-fields";
 import { createInstrumentedGraphqlClient } from "../../lib/create-instrumented-graphql-client";
 import { createLogger } from "../../lib/logger";
 import { loggerContext } from "../../lib/logger-context";
@@ -38,7 +39,7 @@ export const setupIndicesHandlerFactory =
     if (req.method !== "POST") {
       logger.debug("Request method is different than POST, returning 405");
 
-      return res.status(405).end();
+      return res.status(405).send("Method not allowed");
     }
 
     logger.info("Fetching settings");
@@ -61,7 +62,7 @@ export const setupIndicesHandlerFactory =
     if (!configData.appConfig) {
       logger.info("Missing config, returning 400");
 
-      return res.status(400).end();
+      return res.status(400).send("Bad request");
     }
 
     const channels = channelsRequest.data?.channels || [];
@@ -72,6 +73,9 @@ export const setupIndicesHandlerFactory =
       indexNamePrefix: configData.appConfig.indexNamePrefix,
       channels,
       enabledKeys: configData.fieldsMapping.enabledAlgoliaFields,
+      pageEnabledKeys: configData.pageFieldsMapping?.enabledAlgoliaFields ?? [
+        ...AlgoliaPageFieldsKeys,
+      ],
     });
 
     try {
@@ -88,12 +92,12 @@ export const setupIndicesHandlerFactory =
       const problemReporter = new SearchProblemReporter(client);
 
       if (AlgoliaErrorParser.isAuthError(e)) {
-        await problemReporter.reportAuthError();
+        await problemReporter.reportAuthErrorAndDeactivate(authData.appId);
       } else {
         await problemReporter.reportIndexSetupFailed();
       }
 
-      return res.status(500).end();
+      return res.status(500).send("Internal server error");
     }
   };
 

@@ -1,5 +1,88 @@
 # saleor-app-search
 
+## 1.29.1
+
+### Patch Changes
+
+- 91f6d5f: Added support for OIDC between AWS and Vercel (using `@vercel/oidc-aws-credentials-provider`). Now, when `AWS_ARN` env variable is provided, it will take precedence over IAM secrets. This is more secure way to authenticate and is preferred. IAM secrets stay supported, e.g. for local DynamoDB setup.
+
+## 1.29.0
+
+### Minor Changes
+
+- 30bb035: When application config is removed on Algolia side, app was still running and reporting issues. Now if Algolia reports that ID no longer exists, Search App will report a Problem and disable itself.
+
+  Additionally, when app Admin API key is not working, app will disable itself.
+
+### Patch Changes
+
+- ff4174e: Added more logs when fetching data from Saleor on failure to improve debugging.
+- Updated dependencies [ff4174e]
+  - @saleor/apps-shared@1.14.4
+
+## 1.28.1
+
+### Patch Changes
+
+- 622d13c: Updated GraphQL schema to 3.23
+- Updated dependencies [622d13c]
+  - @saleor/webhook-utils@0.2.10
+
+## 1.28.0
+
+### Minor Changes
+
+- 233f044: Added Saleor Pages indexing. Now user can select which page types are going to be synced with Algolia. Additionally some larger attributes can be marked not to be synced
+
+## 1.27.0
+
+### Minor Changes
+
+- 9e703e6: Added category indexing to Algolia. Categories are now synced via `CATEGORY_CREATED`, `CATEGORY_UPDATED`, and `CATEGORY_DELETED` webhooks, and included in the bulk import flow.
+
+  Each category object in Algolia contains: `name`, `slug`, `level`, `ancestors` (flat array of `{id, name, slug}`), `metadata`, and `_type: "category"`. Categories are stored in a dedicated `<prefix>.categories` index with faceting on `level`, `ancestors`, and `metadata`.
+
+  Also enriched product objects with `productTypeId`, `categoryId`, and `categorySlug` fields, and added corresponding faceting/search attributes to product indices.
+
+### Patch Changes
+
+- 3ecde04: Updated @saleor/app-sdk to v1.7.1
+- b57266c: Attach Saleor domain to Sentry events for better aggregation
+- Updated dependencies [3ecde04]
+  - @saleor/app-problems@1.0.2
+  - @saleor/apps-logger@1.6.4
+  - @saleor/apps-otel@2.4.1
+  - @saleor/react-hook-form-macaw@0.2.17
+  - @saleor/sentry-utils@0.2.6
+  - @saleor/apps-shared@1.14.3
+  - @saleor/apps-ui@1.3.3
+  - @saleor/webhook-utils@0.2.9
+
+## 1.26.0
+
+### Minor Changes
+
+- fab1f78: Webhook responses now return plain text response to Saleor, so it should be properly displayed in dashboard "webhook errors". Previously app was returning `{"message": "..."}` which is not recognized shape officially by Saleor nor Dashboard - it was rendered like text anyway.
+
+### Patch Changes
+
+- 0484f64: Add error cause for verifyJwt failures on tRPC
+- 8cc005b: Updated aws-sdk packages and dynamodb-toolbox to latest versions
+- Updated dependencies [8cc005b]
+  - @saleor/app-problems@1.0.1
+
+## 1.25.0
+
+### Minor Changes
+
+- 5b055b15: Added support for App Problems API. Now App will report problems that occur during its operations. These problems will be visible on the Dashboard.
+
+### Patch Changes
+
+- ddfa9593: Changed how generated graphql->typescript types work. Now only types that are directly or indirectly connected to written documents (mutations, queries) are generated
+- Updated dependencies [ddfa9593]
+  - @saleor/webhook-utils@0.2.8
+
 ## 1.24.13
 
 ### Patch Changes

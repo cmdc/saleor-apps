@@ -82,7 +82,7 @@ const isAttributeValueBooleanType = (
  *  Returns object with a key being attribute name and value of all attribute values
  *  separated by comma. If no value is selected, an empty string will be used instead.
  */
-const mapSelectedAttributesToRecord = (attr: ProductAttributesDataFragment) => {
+export const mapSelectedAttributesToRecord = (attr: ProductAttributesDataFragment) => {
   if (!attr.attribute.name?.length) {
     return undefined;
   }
@@ -177,6 +177,9 @@ export function productAndVariantToAlgolia({
     description: safeParseJson(product.description),
     descriptionPlaintext: EditorJsPlaintextRenderer({ stringData: product.description ?? "" }),
     slug: product.slug,
+    productTypeId: product.productType?.id ?? null,
+    categoryId: product.category?.id ?? null,
+    categorySlug: product.category?.slug ?? null,
     thumbnail: product.thumbnail?.url,
     /**
      * Deprecated

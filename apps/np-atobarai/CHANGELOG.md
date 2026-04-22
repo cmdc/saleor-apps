@@ -1,5 +1,72 @@
 # saleor-app-payment-np-atobarai
 
+## 1.4.6
+
+### Patch Changes
+
+- 91f6d5f: Added support for OIDC between AWS and Vercel (using `@vercel/oidc-aws-credentials-provider`). Now, when `AWS_ARN` env variable is provided, it will take precedence over IAM secrets. This is more secure way to authenticate and is preferred. IAM secrets stay supported, e.g. for local DynamoDB setup.
+
+## 1.4.5
+
+### Patch Changes
+
+- Updated dependencies [ff4174e]
+  - @saleor/apps-shared@1.14.4
+  - @saleor/apps-trpc@4.0.5
+
+## 1.4.4
+
+### Patch Changes
+
+- b33bd4e: Fixed fulfillment-tracking-number-updated handler and changed order of validation. Now app will quit if transactions don't include app's own transactions quietly. Previously app was reporting warning for multiple transactions, even if none of them was created by Atobarai
+
+## 1.4.3
+
+### Patch Changes
+
+- 622d13c: Updated GraphQL schema to 3.23
+
+## 1.4.2
+
+### Patch Changes
+
+- 77e64cb: Fixed fulfillment webhook failing for orders with "ghost" transactions. Previously, the app rejected any order with more than one Saleor transaction. Now it filters transactions by status, keeping only those with CHARGE_SUCCESS or AUTHORIZATION_SUCCESS events, and proceeds if exactly one completed transaction exists. Added order notes when fulfillment reporting is skipped due to missing or multiple completed transactions.
+
+## 1.4.1
+
+### Patch Changes
+
+- 3ecde04: Updated @saleor/app-sdk to v1.7.1
+- b57266c: Attach Saleor domain to Sentry events for better aggregation
+- Updated dependencies [3ecde04]
+  - @saleor/apps-domain@1.0.3
+  - @saleor/dynamo-config-repository@1.0.3
+  - @saleor/errors@1.0.2
+  - @saleor/apps-logger@1.6.4
+  - @saleor/apps-otel@2.4.1
+  - @saleor/react-hook-form-macaw@0.2.17
+  - @saleor/sentry-utils@0.2.6
+  - @saleor/apps-shared@1.14.3
+  - @saleor/apps-trpc@4.0.5
+  - @saleor/apps-ui@1.3.3
+
+## 1.4.0
+
+### Minor Changes
+
+- fab1f78: Webhook responses now return plain text response to Saleor, so it should be properly displayed in dashboard "webhook errors". Previously app was returning `{"message": "..."}` which is not recognized shape officially by Saleor nor Dashboard - it was rendered like text anyway.
+
+### Patch Changes
+
+- 0484f64: Add error cause for verifyJwt failures on tRPC
+- 8cc005b: Updated aws-sdk packages and dynamodb-toolbox to latest versions
+
+## 1.3.7
+
+### Patch Changes
+
+- ddfa9593: Changed how generated graphql->typescript types work. Now only types that are directly or indirectly connected to written documents (mutations, queries) are generated
+
 ## 1.3.6
 
 ### Patch Changes

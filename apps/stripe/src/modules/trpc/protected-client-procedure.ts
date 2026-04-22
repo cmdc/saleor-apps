@@ -1,5 +1,6 @@
 import { verifyJWT } from "@saleor/app-sdk/auth";
 import { ObservabilityAttributes } from "@saleor/apps-otel/src/observability-attributes";
+import { setSentrySaleorUser } from "@saleor/sentry-utils";
 import { setTag } from "@sentry/nextjs";
 import { TRPCError } from "@trpc/server";
 
@@ -31,6 +32,8 @@ const attachAppToken = middleware(async ({ ctx, next }) => {
       message: "Missing auth data",
     });
   }
+
+  setSentrySaleorUser(authData.saleorApiUrl);
 
   return next({
     ctx: {
@@ -94,10 +97,10 @@ const validateClientToken = middleware(async ({ ctx, next, meta }) => {
       saleorApiUrl: ctx.saleorApiUrl,
       requiredPermissions: meta?.requiredClientPermissions,
     });
-  } catch {
-    logger.debug("JWT verification failed, throwing");
+  } catch (e) {
+    logger.warn("JWT verification failed, throwing", { error: e });
     throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
+      code: "FORBIDDEN",
       message: "JWT verification failed",
     });
   }

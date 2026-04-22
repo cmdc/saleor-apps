@@ -1,5 +1,17 @@
 # @saleor/apps-shared
 
+## 1.14.4
+
+### Patch Changes
+
+- ff4174e: Added more logs when fetching data from Saleor on failure to improve debugging.
+
+## 1.14.3
+
+### Patch Changes
+
+- 3ecde04: Updated @saleor/app-sdk to v1.7.1
+
 ## 1.14.2
 
 ### Patch Changes

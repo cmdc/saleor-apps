@@ -3,6 +3,7 @@ import { type AuthData } from "@saleor/app-sdk/APL";
 import { ChannelsDocument } from "../../generated/graphql";
 import { AlgoliaSearchProvider } from "../lib/algolia/algoliaSearchProvider";
 import { getAlgoliaConfiguration } from "../lib/algolia/getAlgoliaConfiguration";
+import { AlgoliaPageFieldsKeys } from "../lib/algolia-fields";
 import { createInstrumentedGraphqlClient } from "../lib/create-instrumented-graphql-client";
 import { createTraceEffect } from "../lib/trace-effect";
 
@@ -25,12 +26,17 @@ export const createWebhookContext = async ({ authData }: { authData: AuthData })
 
   if (!settings || errors) {
     let errorMessage = "Error fetching settings";
+    let cause: unknown;
 
-    if (errors && errors.length > 0 && errors[0].message) {
-      errorMessage = errors[0].message;
+    if (errors && errors.length > 0) {
+      if (errors[0].message) {
+        errorMessage = errors[0].message;
+      }
+
+      cause = "cause" in errors[0] ? errors[0].cause : undefined;
     }
 
-    throw new Error(errorMessage);
+    throw new Error(errorMessage, { cause });
   }
 
   if (!settings.appConfig) {
@@ -43,6 +49,7 @@ export const createWebhookContext = async ({ authData }: { authData: AuthData })
     indexNamePrefix: settings.appConfig?.indexNamePrefix,
     channels,
     enabledKeys: settings.fieldsMapping.enabledAlgoliaFields,
+    pageEnabledKeys: settings.pageFieldsMapping?.enabledAlgoliaFields ?? [...AlgoliaPageFieldsKeys],
   });
 
   return {

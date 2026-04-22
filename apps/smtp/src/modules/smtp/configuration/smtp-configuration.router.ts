@@ -49,30 +49,35 @@ export const throwTrpcErrorFromConfigurationServiceError = (
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Configuration not found.",
+          cause: error,
         });
 
       case SmtpConfigurationService.EventConfigNotFoundError:
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Event configuration not found.",
+          cause: error,
         });
 
       case SmtpConfigurationService.CantFetchConfigError:
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Can't fetch configuration.",
+          cause: error,
         });
 
       case SmtpConfigurationService.WrongSaleorVersionError:
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Feature you are trying to use is not supported in this version of Saleor.",
+          cause: error,
         });
 
       case SmtpConfigurationService.TemplateValidationError:
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: error.message,
+          cause: error,
         });
     }
   }
@@ -80,6 +85,7 @@ export const throwTrpcErrorFromConfigurationServiceError = (
   throw new TRPCError({
     code: "INTERNAL_SERVER_ERROR",
     message: "Internal server error",
+    cause: error,
   });
 };
 
@@ -174,6 +180,12 @@ export const smtpConfigurationRouter = router({
       const logger = createLogger("smtpConfigurationRouter", { saleorApiUrl: ctx.saleorApiUrl });
 
       logger.debug(input, "mjmlConfigurationRouter.renderTemplate called");
+
+      logger.info("Template preview requested", {
+        template: input.template,
+        subject: input.subject,
+        payload: input.payload,
+      });
 
       const safeParse = fromThrowable(JSON.parse);
 
@@ -327,6 +339,13 @@ export const smtpConfigurationRouter = router({
 
       logger.debug(input, "smtpConfigurationRouter.updateEvent called");
 
+      logger.info("Template update requested", {
+        configurationId: input.id,
+        eventType: input.eventType,
+        template: input.template,
+        subject: input.subject,
+      });
+
       const { id: configurationId, eventType, ...eventConfiguration } = input;
 
       return await ctx.smtpConfigurationService
@@ -347,6 +366,15 @@ export const smtpConfigurationRouter = router({
       const logger = createLogger("smtpConfigurationRouter", { saleorApiUrl: ctx.saleorApiUrl });
 
       logger.debug(input, "smtpConfigurationRouter.updateEventArray called");
+
+      logger.info("Bulk template update requested", {
+        configurationId: input.configurationId,
+        events: input.events.map((e) => ({
+          eventType: e.eventType,
+          template: e.template,
+          subject: e.subject,
+        })),
+      });
 
       try {
         const configuration = await ctx.smtpConfigurationService.getConfiguration({

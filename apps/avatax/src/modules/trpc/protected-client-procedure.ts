@@ -1,5 +1,6 @@
 import { verifyJWT } from "@saleor/app-sdk/auth";
 import { REQUIRED_SALEOR_PERMISSIONS } from "@saleor/apps-shared/permissions";
+import { setSentrySaleorUser } from "@saleor/sentry-utils";
 import { TRPCError } from "@trpc/server";
 
 import { saleorApp } from "../../../saleor-app";
@@ -32,6 +33,8 @@ const attachAppToken = middleware(async ({ ctx, next }) => {
         "Missing auth data. App installation might be broken, or APL might have have deleted this app installation.",
     });
   }
+
+  setSentrySaleorUser(authData.saleorApiUrl);
 
   return next({
     ctx: {
@@ -85,8 +88,8 @@ const validateClientToken = middleware(async ({ ctx, next, meta }) => {
         ...(meta?.requiredClientPermissions || []),
       ],
     });
-  } catch (_e) {
-    logger.debug("JWT verification failed, throwing");
+  } catch (e) {
+    logger.error("JWT verification failed, throwing", { error: e });
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "JWT verification failed.",

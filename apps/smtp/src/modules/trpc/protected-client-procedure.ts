@@ -1,5 +1,7 @@
 import { verifyJWT } from "@saleor/app-sdk/auth";
 import { REQUIRED_SALEOR_PERMISSIONS } from "@saleor/apps-shared/permissions";
+import { setSentrySaleorUser } from "@saleor/sentry-utils";
+import { captureException } from "@sentry/nextjs";
 import { TRPCError } from "@trpc/server";
 
 import { createInstrumentedGraphqlClient } from "../../lib/create-instrumented-graphql-client";
@@ -31,6 +33,8 @@ const attachAppToken = middleware(async ({ ctx, next }) => {
       message: "Missing auth data",
     });
   }
+
+  setSentrySaleorUser(authData.saleorApiUrl);
 
   return next({
     ctx: {
@@ -86,7 +90,8 @@ const validateClientToken = middleware(async ({ ctx, next, meta }) => {
         ],
       });
     } catch (e) {
-      logger.debug("JWT verification failed, throwing");
+      captureException(e);
+      logger.error("JWT verification failed, throwing", { error: e });
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "JWT verification failed",
